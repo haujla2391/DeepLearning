@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch.utils.data import Subset
 import torchvision
 from model import CNN
+import matplotlib.pyplot as plt
 
 from dataset import BuildingDataset
 

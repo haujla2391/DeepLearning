@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-
 def plot_image(image):
     image = np.reshape(image, (3, 32, 32))
     image = np.transpose(image, (1, 2, 0))
