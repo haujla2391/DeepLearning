@@ -48,38 +48,51 @@ class CNN(nn.Module):
 class CNN_small(nn.Module):
 
     def __init__(self, in_dim, out_dim):
-        super().__init__()
+        super(CNN_small, self).__init__()
 
-        self.in_dim = in_dim
-        self.out_dim = out_dim
+        self.conv1 = nn.Conv2d(
+            in_channels=3,
+            out_channels=32,
+            kernel_size=3,
+            padding=1
+        )
+        # self.bn1 = nn.BatchNorm2d(64)
 
-        self.fc_layer_neurons = 200
+        self.conv2 = nn.Conv2d(
+            in_channels=32,
+            out_channels=64,
+            kernel_size=3,
+            padding=1
+        )
+        # self.bn2 = nn.BatchNorm2d(64)
 
-        self.layer1_filters = 32
+        self.pool = nn.MaxPool2d(2, 2)
 
-        self.layer1_kernel_size = (4,4)
-        self.layer1_stride = 1
-        self.layer1_padding = 0
+        self.fc1 = nn.Linear(64 * 8 * 8, 256)
+        self.dropout = nn.Dropout(0.3)
+        self.fc2 = nn.Linear(256, 10)
 
-        #NB: these calculations assume:
-        #1) padding is 0;
-        #2) stride is picked such that the last step ends on the last pixel, i.e., padding is not used
-        self.layer1_dim_h = (self.in_dim[1] - self.layer1_kernel_size[0]) / self.layer1_stride + 1
-        self.layer1_dim_w = (self.in_dim[2] - self.layer1_kernel_size[1]) / self.layer1_stride + 1
+        nn.init.kaiming_normal_(self.conv1.weight, nonlinearity='relu')
+        nn.init.kaiming_normal_(self.conv2.weight, nonlinearity='relu')
+        nn.init.kaiming_normal_(self.fc1.weight, nonlinearity='relu')
 
-        self.conv1 = nn.Conv2d(3, self.layer1_filters, self.layer1_kernel_size, stride=self.layer1_stride, padding=self.layer1_padding)
 
-        self.fc_inputs = int(self.layer1_filters * self.layer1_dim_h * self.layer1_dim_w)
-
-        self.lin1 = nn.Linear(self.fc_inputs, self.fc_layer_neurons)
-
-        self.lin2 = nn.Linear(self.fc_layer_neurons, self.out_dim)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
+        x = self.conv1(x)
+        # x = self.bn1(x)
+        x = F.leaky_relu(x, 0.1)
+        x = self.pool(x)
 
-        # flatten convolutional layer into vector
+        x = self.conv2(x)
+        # x = self.bn2(x)
+        x = F.leaky_relu(x, 0.1)
+        x = self.pool(x)
+
         x = x.view(x.size(0), -1)
-        x = F.relu(self.lin1(x))
-        x = self.lin2(x)
+
+        x = F.leaky_relu(self.fc1(x), 0.1)
+        x = self.dropout(x)
+        x = self.fc2(x)
+
         return x

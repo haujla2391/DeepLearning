@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # set hyper-parameters
     train_batch_size = 100
     test_batch_size = 100
-    n_epochs = 10
+    n_epochs = 5
     learning_rate = 1e-2
     seed = 100
     input_dim = (3,32,32)
