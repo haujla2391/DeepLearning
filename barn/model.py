@@ -70,6 +70,7 @@ class CNN(nn.Module):
         x = F.leaky_relu(x)
         x = self.pool2(x)
 
+        x = torch.flatten(x, 1)
         x = self.fc(x)
         return x
 
