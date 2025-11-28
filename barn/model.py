@@ -7,43 +7,72 @@ class FC(nn.Module):
     def __init__(self, in_dim, out_dim, num_hidden_layers, layer_size):
         super().__init__()
 
-        self.num_layers = num_hidden_layers * 2 + 3 # *2 accounts for ReLU layers, +3 is input layer, input relu layer, output layer
+        layers = []
+        prev = in_dim
 
-        self.in_dim = in_dim
-        self.out_dim = out_dim
+        for _ in range(num_hidden_layers):
+            layers.append(nn.Linear(prev, layer_size))
+            prev = layer_size
 
-        self.layer_size = layer_size
+        layers.append(nn.Linear(prev, out_dim))
 
-        self.layer_list = nn.ModuleList()
-
-        self.layer_list.append(nn.Linear(self.in_dim, self.layer_size))
+        self.layers = nn.ModuleList(layers)
         self.num_hidden_layers = num_hidden_layers
-
-        for i in range(1,self.num_hidden_layers):
-            self.layer_list.append(nn.Linear(self.layer_size, self.layer_size))
-
-
-        self.layer_list.append(nn.Linear(self.layer_size, self.out_dim))
 
     def forward(self, x):
 
-        x = x.view(-1, self.in_dim)
+        x = x.view(x.size(0), -1)
 
         for i in range(self.num_hidden_layers):
             x = F.relu(self.layer_list[i](x))
 
-        return self.layer_list[self.num_hidden_layers](x)
+        return self.layers[self.num_hidden_layers](x)
 
 class CNN(nn.Module):
 
     def __init__(self, in_dim, out_dim):
-        super().__init__()
+        super(CNN, ).__init__()
 
-        self.in_dim = in_dim
-        self.out_dim = out_dim
+        self.conv1 = nn.Conv2d(
+            in_channels=3,
+            out_channels=32,
+            kernel_size=3,
+            padding=1
+        )
+
+        self.pool1 = nn.MaxPool2d(2, 2)
+
+        self.conv2 = nn.Conv2d(
+            in_channels=32,
+            out_channels=64,
+            kernel_size=3,
+            padding=1
+        )
+
+        self.pool2 = nn.MaxPool2d(2, 2)
+
+        self.flatten_dim = 64 * 63 * 47
+
+        self.fc = FC(
+            in_dim=self.flatten_dim,
+            out_dim=out_dim,
+            num_hidden_layers=256,
+            layer_size=256
+        )
+
 
     def forward(self, x):
-        pass
+        x = self.conv1(x)
+        x = F.leaky_relu(x)
+        x = self.pool1(x)
+
+        x = self.conv2(x)
+        x = F.leaky_relu(x)
+        x = self.pool2(x)
+
+        x = self.fc(x)
+        return x
+
 
 class CNN_small(nn.Module):
 
@@ -80,12 +109,10 @@ class CNN_small(nn.Module):
 
     def forward(self, x):
         x = self.conv1(x)
-        # x = self.bn1(x)
         x = F.leaky_relu(x, 0.1)
         x = self.pool(x)
 
         x = self.conv2(x)
-        # x = self.bn2(x)
         x = F.leaky_relu(x, 0.1)
         x = self.pool(x)
 
