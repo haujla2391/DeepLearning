@@ -58,8 +58,8 @@ def test(net, loader, device):
             total = total + 1
 
     print('Test set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)'.format(
-        test_loss, correct, len(loader.dataset),
-        (100. * correct / len(loader.dataset))), flush=True)
+        test_loss, correct, len(loader.dataset), (100.0 * correct / len(loader.dataset))
+    ), flush=True)
 
     return 100.0 * correct / len(loader.dataset)
 
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     # set training hyperparameters
     train_batch_size = 100
     test_batch_size = 100
-    n_epochs = 10
+    n_epochs = 45
     learning_rate = 1e-3
     seed = 100
     input_dim = (3, new_h, new_w)

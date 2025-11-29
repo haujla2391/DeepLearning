@@ -4,38 +4,29 @@ import torch.nn.functional as F
 
 class FC(nn.Module):
 
-    def __init__(self, in_dim, out_dim, num_hidden_layers, layer_size):
+    def __init__(self, in_dim, out_dim, dropout=0.5):
         super().__init__()
 
-        layers = []
-        prev = in_dim
-
-        for _ in range(num_hidden_layers):
-            layers.append(nn.Linear(prev, layer_size))
-            prev = layer_size
-
-        layers.append(nn.Linear(prev, out_dim))
-
-        self.layers = nn.ModuleList(layers)
-        self.num_hidden_layers = num_hidden_layers
+        self.fc1 = nn.Linear(in_dim, 16)
+        self.dropout = nn.Dropout(dropout)
+        self.fc2 = nn.Linear(16, out_dim)
 
     def forward(self, x):
 
-        x = x.view(x.size(0), -1)
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x)
 
-        for i in range(self.num_hidden_layers):
-            x = F.relu(self.layer_list[i](x))
-
-        return self.layers[self.num_hidden_layers](x)
+        return x
 
 class CNN(nn.Module):
 
     def __init__(self, in_dim, out_dim):
-        super(CNN, ).__init__()
+        super().__init__()
 
         self.conv1 = nn.Conv2d(
             in_channels=3,
-            out_channels=32,
+            out_channels=8,
             kernel_size=3,
             padding=1
         )
@@ -43,32 +34,48 @@ class CNN(nn.Module):
         self.pool1 = nn.MaxPool2d(2, 2)
 
         self.conv2 = nn.Conv2d(
-            in_channels=32,
-            out_channels=64,
+            in_channels=8,
+            out_channels=16,
             kernel_size=3,
             padding=1
         )
 
         self.pool2 = nn.MaxPool2d(2, 2)
 
-        self.flatten_dim = 64 * 63 * 47
+        self.conv3 = nn.Conv2d(
+            in_channels=16,
+            out_channels=32,
+            kernel_size=3,
+            padding=1
+        )
+
+        self.pool3 = nn.MaxPool2d(2, 2)
+
+        with torch.no_grad():
+            dummy = torch.zeros(1, *in_dim) 
+            dummy = self.pool1(F.relu(self.conv1(dummy)))
+            dummy = self.pool2(F.relu(self.conv2(dummy)))
+            dummy = self.pool3(F.relu(self.conv3(dummy)))
+            self.flatten_dim = dummy.numel()
 
         self.fc = FC(
             in_dim=self.flatten_dim,
             out_dim=out_dim,
-            num_hidden_layers=256,
-            layer_size=256
         )
 
 
     def forward(self, x):
         x = self.conv1(x)
-        x = F.leaky_relu(x)
+        x = F.relu(x)
         x = self.pool1(x)
 
         x = self.conv2(x)
-        x = F.leaky_relu(x)
+        x = F.relu(x)
         x = self.pool2(x)
+
+        x = self.conv3(x)
+        x = F.relu(x)
+        x = self.pool3(x)
 
         x = torch.flatten(x, 1)
         x = self.fc(x)
