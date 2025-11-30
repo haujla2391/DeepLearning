@@ -126,7 +126,7 @@ if __name__ == '__main__':
     # set training hyperparameters
     train_batch_size = 100
     test_batch_size = 100
-    n_epochs = 45
+    n_epochs = 30
     learning_rate = 1e-3
     seed = 100
     input_dim = (3, new_h, new_w)
@@ -142,11 +142,20 @@ if __name__ == '__main__':
 
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
 
+    """
     model_path = 'models/'
     if not os.path.exists(model_path):
         os.mkdir(model_path)
 
     PATH = model_path + 'cnn_buildings.pth'
+    """
+
+    scratch = os.environ.get("SCRATCH", "/gpfs/u/scratch/RNL3/RNL3wjms/")
+    model_path = os.path.join(scratch, "cnn_buildings_models")
+
+    os.makedirs(model_path, exist_ok=True)
+
+    PATH = os.path.join(model_path, "cnn_buildings.pth")
 
     if len(sys.argv) > 1 and sys.argv[1] == 'load':
         network.load_state_dict(torch.load(PATH))
